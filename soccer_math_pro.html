@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Henry's Soccer Math Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   TOKENS — dark stadium, neon pitch
+═══════════════════════════════════════ */
+:root {
+  --pitch:    #050d08;
+  --turf:     #071a0e;
+  --line:     #0d2e18;
+  --neon:     #00ff6e;
+  --neon2:    #00cc58;
+  --neon-dim: rgba(0,255,110,0.15);
+  --white:    #f0f5f1;
+  --offwhite: #c8d4cc;
+  --gold:     #f5c518;
+  --amber:    #ff9d00;
+  --red:      #ff3d57;
+  --blue:     #1a8cff;
+  --card:     rgba(7,26,14,0.82);
+  --border:   rgba(0,255,110,0.18);
+  --font-h:   'Barlow Condensed', sans-serif;
+  --font-b:   'Barlow', sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+html { min-height: -webkit-fill-available; }
+body {
+  font-family: var(--font-b);
+  background: var(--pitch);
+  color: var(--white);
+  min-height: 100vh; min-height: -webkit-fill-available;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+/* ═══════════════════════════════════════
+   PITCH BACKGROUND
+═══════════════════════════════════════ */
+#pitch-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  background: linear-gradient(160deg, #050d08 0%, #071a0e 40%, #050d08 100%);
+}
+/* Diagonal pitch stripes */
+.pitch-stripe {
+  position: absolute; top: 0; bottom: 0;
+  background: rgba(0,255,110,0.025);
+  transform: skewX(-12deg);
+}
+/* Pitch lines */
+.pitch-line {
+  position: absolute; background: rgba(0,255,110,0.07);
+}
+/* Corner arc */
+.corner-arc {
+  position: absolute; border-radius: 50%;
+  border: 1px solid rgba(0,255,110,0.08);
+  width: 200px; height: 200px;
+}
+/* Floating soccer balls */
+.ball-bg {
+  position: absolute; font-size: 2rem; opacity: 0.04;
+  animation: ballDrift linear infinite;
+}
+@keyframes ballDrift {
+  0%   { transform: translateY(0)    rotate(0deg); }
+  100% { transform: translateY(-60px) rotate(360deg); }
+}
+/* Stadium floodlight glow */
+.floodlight {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,220,0.06) 0%, transparent 70%);
+  animation: floodPulse ease-in-out infinite alternate;
+}
+@keyframes floodPulse {
+  from { opacity: 0.5; transform: scale(1); }
+  to   { opacity: 1;   transform: scale(1.08); }
+}
+
+/* ═══════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════ */
+#app { position: relative; z-index: 1; min-height: 100vh; }
+
+.screen {
+  display: none;
+  min-height: 100vh; min-height: -webkit-fill-available;
+  padding: 20px;
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.screen.active { display: flex; }
+
+/* ═══════════════════════════════════════
+   INTRO
+═══════════════════════════════════════ */
+#intro-screen { text-align: center; }
+
+.hero-ball {
+  font-size: 6rem; display: block; line-height: 1;
+  animation: heroBounce 1.4s cubic-bezier(0.36,0.07,0.19,0.97) infinite alternate;
+  filter: drop-shadow(0 0 30px rgba(0,255,110,0.5));
+}
+@keyframes heroBounce {
+  0%   { transform: translateY(0) rotate(-8deg) scale(1); }
+  100% { transform: translateY(-18px) rotate(8deg) scale(1.04); }
+}
+
+.game-title {
+  font-family: var(--font-h);
+  font-size: clamp(3rem, 10vw, 6.5rem);
+  font-weight: 900; font-style: italic;
+  text-transform: uppercase; letter-spacing: -1px;
+  line-height: 0.9;
+  background: linear-gradient(160deg, var(--white) 0%, var(--neon) 55%, var(--gold) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 2px 16px rgba(0,255,110,0.35));
+  animation: titleFlare 3s ease-in-out infinite alternate;
+}
+@keyframes titleFlare {
+  0%   { filter: drop-shadow(0 2px 10px rgba(0,255,110,0.25)); }
+  100% { filter: drop-shadow(0 2px 32px rgba(0,255,110,0.6)) drop-shadow(0 0 60px rgba(245,197,24,0.2)); }
+}
+
+.game-sub {
+  font-family: var(--font-h); font-weight: 700;
+  font-size: 1.1rem; text-transform: uppercase; letter-spacing: 4px;
+  color: var(--offwhite); opacity: 0.7;
+}
+
+.neon-divider {
+  width: 100%; max-width: 400px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon), transparent);
+  border: none; opacity: 0.5;
+}
+
+.intro-card {
+  max-width: 460px; background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px 24px;
+  font-size: 1.05rem; line-height: 1.8; color: var(--offwhite);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  text-align: left;
+}
+.intro-card strong { color: var(--neon); font-family: var(--font-h); font-weight: 700; }
+
+/* ═══════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════ */
+.btn {
+  font-family: var(--font-h); font-weight: 700; font-size: 1.2rem;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 14px 36px; border: none; border-radius: 8px;
+  cursor: pointer; transition: all 0.15s;
+  touch-action: manipulation; -webkit-user-select: none; user-select: none;
+  min-height: 52px; -webkit-appearance: none; appearance: none;
+}
+.btn:active { transform: scale(0.94) !important; }
+
+.btn-kick {
+  background: var(--neon); color: var(--pitch);
+  font-size: 1.5rem; padding: 18px 52px;
+  box-shadow: 0 0 0 0 rgba(0,255,110,0.5);
+  animation: kickPulse 2s ease-in-out infinite;
+}
+@keyframes kickPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0,255,110,0.5); }
+  70%  { box-shadow: 0 0 0 16px rgba(0,255,110,0); }
+  100% { box-shadow: 0 0 0 0 rgba(0,255,110,0); }
+}
+.btn-kick:hover { background: #33ff88; transform: translateY(-2px); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--neon2), var(--blue));
+  color: var(--white); box-shadow: 0 4px 16px rgba(0,204,88,0.35);
+}
+.btn-primary:hover { transform: translateY(-2px); }
+
+.btn-ghost {
+  background: transparent; color: var(--offwhite);
+  border: 1.5px solid rgba(255,255,255,0.2); font-size: 1rem; padding: 12px 26px;
+}
+.btn-wide { width: 100%; max-width: 520px; }
+
+/* ═══════════════════════════════════════
+   HUD
+═══════════════════════════════════════ */
+.hud {
+  width: 100%; max-width: 720px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 18px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.hud-name  { font-family: var(--font-h); font-weight: 700; font-size: 1.1rem; color: var(--neon); text-transform: uppercase; letter-spacing: 1px; }
+.hud-score { font-family: var(--font-h); font-size: 1rem; color: var(--gold); font-weight: 600; }
+.hud-lives { font-size: 1.1rem; letter-spacing: 3px; }
+
+/* ═══════════════════════════════════════
+   MAP SCREEN
+═══════════════════════════════════════ */
+#map-screen { justify-content: flex-start; padding-top: max(24px, env(safe-area-inset-top)); }
+
+.map-title {
+  font-family: var(--font-h); font-weight: 900; font-style: italic;
+  font-size: clamp(1.6rem, 5.5vw, 2.8rem);
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--white); text-align: center;
+}
+.map-title span { color: var(--neon); }
+
+.league-grid {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  justify-content: center; max-width: 760px; width: 100%;
+}
+
+.league-card {
+  width: 210px; border-radius: 14px; padding: 22px 16px;
+  text-align: center; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1.5px solid transparent; position: relative; overflow: hidden;
+  touch-action: manipulation;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.league-card::before {
+  content: ""; position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    -55deg, transparent, transparent 4px,
+    rgba(0,255,110,0.018) 4px, rgba(0,255,110,0.018) 8px
+  );
+  pointer-events: none;
+}
+.league-card.locked    { opacity: 0.3; cursor: not-allowed; background: rgba(7,26,14,0.5); border-color: rgba(0,255,110,0.05); }
+.league-card.available { background: var(--card); border-color: var(--border); animation: cardGlow 2.5s ease-in-out infinite alternate; }
+.league-card.completed { background: rgba(0,255,110,0.08); border-color: var(--neon2); }
+.league-card.current   { background: rgba(26,140,255,0.1); border-color: var(--blue); animation: currentGlow 1.8s ease-in-out infinite alternate; }
+@keyframes cardGlow    { from{box-shadow:0 0 10px rgba(0,255,110,0.1)} to{box-shadow:0 0 28px rgba(0,255,110,0.35)} }
+@keyframes currentGlow { from{box-shadow:0 0 14px rgba(26,140,255,0.2)} to{box-shadow:0 0 42px rgba(26,140,255,0.55)} }
+.league-card:not(.locked):hover { transform: translateY(-5px) scale(1.02); }
+
+.card-badge {
+  display: inline-block; font-family: var(--font-h); font-weight: 700;
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+  padding: 3px 10px; border-radius: 4px; margin-bottom: 10px;
+}
+.card-icon  { font-size: 3.2rem; display: block; margin-bottom: 8px; }
+.card-name  { font-family: var(--font-h); font-weight: 900; font-style: italic; font-size: 1.2rem; text-transform: uppercase; margin-bottom: 3px; }
+.card-grade { font-size: 0.78rem; color: var(--offwhite); opacity: 0.55; margin-bottom: 10px; }
+.bar-wrap   { background: rgba(255,255,255,0.07); border-radius: 4px; height: 6px; overflow: hidden; margin-bottom: 4px; }
+.bar-fill   { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.bar-text   { font-family: var(--font-h); font-size: 0.75rem; color: var(--offwhite); opacity: 0.65; }
+
+/* Score meter */
+.score-meter {
+  width: 100%; max-width: 520px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 26px; text-align: center;
+  backdrop-filter: blur(10px);
+}
+.score-label { font-family: var(--font-h); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: var(--offwhite); opacity: 0.5; margin-bottom: 4px; }
+.score-val   { font-family: var(--font-h); font-weight: 900; font-size: 2.6rem; color: var(--neon); display: block; line-height: 1; }
+.score-outer { background: rgba(255,255,255,0.06); border-radius: 4px; height: 10px; overflow: hidden; margin-top: 10px; }
+.score-inner { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--neon2), var(--blue), var(--gold)); transition: width 0.9s ease; }
+.score-range { display: flex; justify-content: space-between; font-family: var(--font-h); font-size: 0.7rem; color: rgba(200,212,204,0.35); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ═══════════════════════════════════════
+   QUESTION SCREEN
+═══════════════════════════════════════ */
+#question-screen { justify-content: flex-start; gap: 11px; }
+
+.q-top {
+  width: 100%; max-width: 720px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+}
+.q-league-tag { font-family: var(--font-h); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--neon); }
+.q-num        { font-size: 0.7rem; color: rgba(200,212,204,0.4); }
+.q-streak     { font-family: var(--font-h); font-weight: 700; font-size: 1rem; color: var(--amber); text-transform: uppercase; letter-spacing: 1px; }
+.q-pts        { font-family: var(--font-h); font-weight: 700; font-size: 1rem; color: var(--gold); }
+
+.q-prog-outer { width: 100%; max-width: 720px; background: rgba(255,255,255,0.06); border-radius: 3px; height: 5px; overflow: hidden; }
+.q-prog-inner { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--neon), var(--blue)); transition: width 0.4s ease; }
+
+/* Commentator */
+.commentator {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: rgba(26,140,255,0.08); border: 1px solid rgba(26,140,255,0.22);
+  border-radius: 12px; padding: 11px 15px; width: 100%; max-width: 720px;
+}
+.comm-face { font-size: 2.2rem; flex-shrink: 0; animation: commBob 2.5s ease-in-out infinite; }
+@keyframes commBob { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+.comm-name { font-family: var(--font-h); font-weight: 700; font-size: 0.85rem; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+.comm-msg  { font-size: 0.88rem; line-height: 1.5; color: var(--offwhite); }
+
+/* Question card */
+.q-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 22px 24px;
+  width: 100%; max-width: 720px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  position: relative; overflow: hidden;
+}
+.q-card::after {
+  content: "";
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon), transparent);
+  opacity: 0.4;
+}
+.q-badge {
+  display: inline-block; padding: 3px 12px; border-radius: 4px;
+  font-family: var(--font-h); font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
+}
+.badge-math { background: rgba(0,255,110,0.12); color: var(--neon); border: 1px solid rgba(0,255,110,0.3); }
+.badge-word { background: rgba(245,197,24,0.12); color: var(--gold); border: 1px solid rgba(245,197,24,0.3); }
+
+.q-text { font-size: clamp(1.05rem, 3vw, 1.3rem); font-weight: 500; line-height: 1.65; margin-bottom: 6px; }
+.q-hint { font-size: 0.82rem; color: rgba(200,212,204,0.4); font-style: italic; }
+
+/* Choices */
+.choices-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 720px; }
+.choice-btn {
+  background: rgba(7,26,14,0.9); border: 1.5px solid rgba(0,255,110,0.15);
+  border-radius: 10px; padding: 15px 12px;
+  color: var(--white); font-family: var(--font-b); font-size: 1rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; text-align: center;
+  touch-action: manipulation; -webkit-user-select: none; user-select: none;
+  min-height: 58px; -webkit-appearance: none; appearance: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.choice-btn:hover:not(:disabled) { background: var(--neon-dim); border-color: var(--neon); transform: scale(1.02); }
+.choice-btn.correct-ans { background: rgba(0,255,110,0.2); border-color: var(--neon); animation: goalFlash 0.45s ease; }
+.choice-btn.wrong-ans   { background: rgba(255,61,87,0.18); border-color: var(--red); animation: missShake 0.38s ease; }
+@keyframes goalFlash  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+@keyframes missShake  { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+/* Free answer */
+.free-wrap  { display: flex; gap: 10px; width: 100%; max-width: 720px; }
+.free-input {
+  flex: 1; padding: 14px 18px; font-size: 1.1rem; font-family: var(--font-b); font-weight: 500;
+  border: 1.5px solid rgba(0,255,110,0.25); background: rgba(7,26,14,0.9);
+  color: var(--white); border-radius: 10px; outline: none; text-align: center;
+  transition: border-color 0.2s; -webkit-appearance: none; appearance: none; min-height: 52px;
+}
+.free-input:focus { border-color: var(--neon); }
+.btn-check {
+  background: var(--neon); color: var(--pitch);
+  border: none; border-radius: 10px; padding: 0 22px;
+  font-family: var(--font-h); font-weight: 700; font-size: 1rem;
+  text-transform: uppercase; letter-spacing: 1px;
+  cursor: pointer; transition: all 0.15s; min-height: 52px;
+  touch-action: manipulation; -webkit-appearance: none;
+}
+.btn-check:hover { background: #33ff88; transform: scale(1.04); }
+
+/* Feedback */
+.feedback {
+  width: 100%; max-width: 720px; padding: 12px 18px;
+  border-radius: 10px; font-family: var(--font-h); font-weight: 700;
+  font-size: 1.15rem; text-transform: uppercase; letter-spacing: 1px;
+  text-align: center; display: none;
+}
+.feedback.show { display: block; animation: fbSlide 0.25s ease; }
+@keyframes fbSlide { from{transform:translateY(-8px);opacity:0} to{transform:translateY(0);opacity:1} }
+.feedback.ok  { background: rgba(0,255,110,0.15); border: 1.5px solid var(--neon); color: var(--neon); }
+.feedback.bad { background: rgba(255,61,87,0.12); border: 1.5px solid var(--red); color: #ff8a9a; }
+
+.next-wrap { width: 100%; max-width: 720px; }
+
+/* ═══════════════════════════════════════
+   LEVEL UP
+═══════════════════════════════════════ */
+#levelup-screen {
+  text-align: center; gap: 20px;
+  background: radial-gradient(ellipse at center, rgba(0,255,110,0.1) 0%, transparent 65%);
+}
+.lu-icon  { font-size: 5.5rem; animation: luBounce 0.6s cubic-bezier(0.36,0.07,0.19,0.97); }
+@keyframes luBounce { 0%{transform:scale(0.2);opacity:0} 60%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
+.lu-title {
+  font-family: var(--font-h); font-weight: 900; font-style: italic;
+  font-size: clamp(2rem, 6vw, 3.5rem); text-transform: uppercase;
+  background: linear-gradient(135deg, var(--white), var(--neon), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.lu-desc  { font-size: 1.05rem; max-width: 420px; line-height: 1.7; color: var(--offwhite); }
+.lu-stats {
+  display: flex; gap: 28px; flex-wrap: wrap; justify-content: center;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px 30px;
+}
+.stat-v { font-family: var(--font-h); font-weight: 900; font-size: 2.2rem; color: var(--neon); display: block; }
+.stat-l { font-family: var(--font-h); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(200,212,204,0.4); }
+
+/* ═══════════════════════════════════════
+   WIN
+═══════════════════════════════════════ */
+#win-screen {
+  text-align: center; gap: 22px;
+  background: radial-gradient(ellipse at center, rgba(245,197,24,0.12) 0%, transparent 65%);
+}
+.win-title {
+  font-family: var(--font-h); font-weight: 900; font-style: italic;
+  font-size: clamp(2.2rem, 8vw, 5rem); text-transform: uppercase;
+  background: linear-gradient(135deg, var(--neon), var(--white), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: titleFlare 1.5s ease-in-out infinite alternate;
+}
+.trophy-box {
+  background: var(--card); border: 2px solid var(--gold);
+  border-radius: 14px; padding: 26px 44px; text-align: center;
+  box-shadow: 0 0 40px rgba(245,197,24,0.18);
+}
+.trophy-score { font-family: var(--font-h); font-weight: 900; font-size: 4.5rem; color: var(--gold); display: block; line-height: 1; }
+.trophy-lbl   { font-family: var(--font-h); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(200,212,204,0.45); margin-top: 4px; }
+
+/* ═══════════════════════════════════════
+   CONFETTI
+═══════════════════════════════════════ */
+.confetti-piece { position: fixed; pointer-events: none; z-index: 999; animation: cFall linear forwards; }
+@keyframes cFall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh)  rotate(540deg); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media (min-width: 600px) and (max-width: 1024px) {
+  .choice-btn  { min-height: 66px; font-size: 1.05rem; }
+  .btn         { min-height: 54px; }
+  .league-card { width: 205px; }
+}
+@media (min-width: 900px) and (max-height: 720px) {
+  .hero-ball   { font-size: 4rem; }
+  .game-title  { font-size: 3.5rem; }
+  #intro-screen { gap: 12px; }
+  #question-screen { gap: 8px; }
+  .q-card { padding: 16px 20px; }
+}
+@media (max-width: 480px) {
+  .choices-grid { grid-template-columns: 1fr; }
+  .league-card  { width: 155px; padding: 16px 12px; }
+  .lu-stats     { flex-direction: column; gap: 14px; }
+}
+</style>
+</head>
+<body>
+
+<div id="pitch-bg"></div>
+
+<div id="app">
+
+<!-- ═══════ INTRO ═══════ -->
+<div id="intro-screen" class="screen active">
+  <span class="hero-ball">⚽</span>
+  <div class="game-title">Soccer<br>Math Pro</div>
+  <div class="game-sub">⚽ Henry's Soccer Academy ⚽</div>
+  <hr class="neon-divider">
+  <div class="intro-card">
+    Hey <strong>Henry</strong>! ⚽ Three competitions stand between you and the <strong>World Championship</strong>!<br><br>
+    Battle through the <strong>Regional League</strong>, survive the <strong>National Cup</strong>, and conquer the <strong>World Final</strong>. Solve math problems to earn goals, build your streak, and climb the rankings.<br><br>
+    Master 90% of each competition to advance. Your progress is <strong>saved automatically</strong> — pick up right where you left off. 💾
+  </div>
+
+  <!-- Resume panel — shown only when a save exists -->
+  <div id="resume-panel" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:420px">
+    <div style="background:rgba(0,255,110,0.08);border:1px solid rgba(0,255,110,0.3);border-radius:12px;padding:16px 22px;text-align:center;width:100%">
+      <div style="font-family:var(--font-h);font-weight:700;font-size:1rem;color:var(--neon);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">👋 Welcome back, Henry!</div>
+      <div id="resume-detail" style="font-size:0.88rem;color:var(--offwhite);line-height:1.7"></div>
+    </div>
+    <button type="button" class="btn btn-kick" style="font-size:1.2rem;padding:14px 36px;animation:none;box-shadow:none;" onclick="resumeGame()">▶ Continue</button>
+    <button type="button" class="btn btn-ghost" onclick="startOver()">New Game</button>
+  </div>
+
+  <button type="button" class="btn btn-kick" id="start-btn" onclick="startGame()">⚽ Kick Off!</button>
+</div>
+
+<!-- ═══════ MAP ═══════ -->
+<div id="map-screen" class="screen">
+  <div class="hud">
+    <div class="hud-name">⚽ Henry</div>
+    <div class="hud-score">MAP Rating: <span id="hud-map">251</span></div>
+    <div class="hud-lives" id="hud-lives">💚💚💚</div>
+  </div>
+
+  <div class="map-title">Select <span>Competition</span></div>
+
+  <div class="league-grid">
+    <!-- Regional League -->
+    <div class="league-card" id="lcard-0" onclick="enterLeague(0)">
+      <div class="card-badge" style="background:rgba(0,255,110,0.12);color:var(--neon)">Division I</div>
+      <span class="card-icon">🏟️</span>
+      <div class="card-name" style="color:var(--neon)">Regional League</div>
+      <div class="card-grade">8th Grade · MAP 251–264</div>
+      <div class="bar-wrap"><div class="bar-fill" id="lbar-0" style="width:0%;background:linear-gradient(90deg,var(--neon2),var(--neon))"></div></div>
+      <div class="bar-text" id="lptext-0">0% Complete</div>
+    </div>
+    <!-- National Cup -->
+    <div class="league-card locked" id="lcard-1" onclick="enterLeague(1)">
+      <div class="card-badge" style="background:rgba(26,140,255,0.12);color:var(--blue)">Division II</div>
+      <span class="card-icon">🏆</span>
+      <div class="card-name" style="color:var(--blue)">National Cup</div>
+      <div class="card-grade">9th Grade · MAP 264–279</div>
+      <div class="bar-wrap"><div class="bar-fill" id="lbar-1" style="width:0%;background:linear-gradient(90deg,var(--blue),#66aaff)"></div></div>
+      <div class="bar-text" id="lptext-1">🔒 Locked</div>
+    </div>
+    <!-- World Final -->
+    <div class="league-card locked" id="lcard-2" onclick="enterLeague(2)">
+      <div class="card-badge" style="background:rgba(245,197,24,0.12);color:var(--gold)">World Final</div>
+      <span class="card-icon">🌍</span>
+      <div class="card-name" style="color:var(--gold)">World Final</div>
+      <div class="card-grade">10th Grade · MAP 279–290</div>
+      <div class="bar-wrap"><div class="bar-fill" id="lbar-2" style="width:0%;background:linear-gradient(90deg,var(--gold),var(--amber))"></div></div>
+      <div class="bar-text" id="lptext-2">🔒 Locked</div>
+    </div>
+  </div>
+
+  <div class="score-meter">
+    <div class="score-label">Henry's Rating</div>
+    <span class="score-val" id="map-val">251</span>
+    <div class="score-outer"><div class="score-inner" id="map-bar" style="width:0%"></div></div>
+    <div class="score-range"><span>251 (Rookie)</span><span>290 (World Champ 🏆)</span></div>
+  </div>
+</div>
+
+<!-- ═══════ QUESTION ═══════ -->
+<div id="question-screen" class="screen">
+  <div class="q-top">
+    <div>
+      <div class="q-league-tag" id="q-league">🏟️ Regional League</div>
+      <div class="q-num" id="q-num">Question 1 of 250</div>
+    </div>
+    <div class="q-streak" id="q-streak">🔥 0 streak</div>
+    <div class="q-pts" id="q-pts">⚽ 0 goals</div>
+  </div>
+
+  <div class="q-prog-outer"><div class="q-prog-inner" id="q-prog" style="width:0%"></div></div>
+
+  <div class="commentator">
+    <div class="comm-face" id="comm-face">🎙️</div>
+    <div>
+      <div class="comm-name" id="comm-name">Commentator</div>
+      <div class="comm-msg"  id="comm-msg">The player steps up...</div>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <span class="q-badge" id="q-badge">Math</span>
+    <div class="q-text"   id="q-text">Loading...</div>
+    <div class="q-hint"   id="q-hint"></div>
+  </div>
+
+  <div id="answer-area"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="next-wrap" id="next-wrap" style="display:none">
+    <button type="button" class="btn btn-primary btn-wide" onclick="nextQuestion()">Next Question ▶</button>
+  </div>
+</div>
+
+<!-- ═══════ LEVEL UP ═══════ -->
+<div id="levelup-screen" class="screen">
+  <div class="lu-icon"  id="lu-icon">🏆</div>
+  <div class="lu-title" id="lu-title">Full Time!</div>
+  <p   class="lu-desc"  id="lu-desc">Result confirmed.</p>
+  <div class="lu-stats">
+    <div><span class="stat-v" id="lu-correct">0</span><div class="stat-l">Correct</div></div>
+    <div><span class="stat-v" id="lu-acc">0%</span><div class="stat-l">Accuracy</div></div>
+    <div><span class="stat-v" id="lu-gain">+0</span><div class="stat-l">MAP Pts</div></div>
+  </div>
+  <button type="button" class="btn btn-primary" id="lu-btn" onclick="afterLevelUp()">Continue ▶</button>
+</div>
+
+<!-- ═══════ WIN ═══════ -->
+<div id="win-screen" class="screen">
+  <span style="font-size:5.5rem;animation:heroBounce 1.2s ease-in-out infinite alternate;display:block;filter:drop-shadow(0 0 30px rgba(245,197,24,0.8))">🏆</span>
+  <div class="win-title">World<br>Champion!</div>
+  <p style="font-size:1.1rem;max-width:440px;text-align:center;line-height:1.8;color:var(--offwhite)">
+    <strong>Henry</strong>, you battled through the Regional League, the National Cup, and the World Final.<br><br>
+    You are the <strong style="color:var(--neon)">Soccer Math World Champion!</strong> ⚽🌍
+  </p>
+  <div class="trophy-box">
+    <span class="trophy-score" id="final-score">290</span>
+    <div class="trophy-lbl">Final MAP Rating</div>
+  </div>
+  <button type="button" class="btn btn-kick" onclick="playAgain()">🔄 Play Again</button>
+</div>
+
+</div><!-- #app -->
+
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════ */
+function ri(a, b)  { if (a > b) { var t=a; a=b; b=t; } return Math.floor(Math.random()*(b-a+1))+a; }
+function pick(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+function gcd(a, b) { return b===0 ? Math.abs(a) : gcd(b, a%b); }
+
+function fy(arr) {
+  var a=arr.slice(), i, j, tmp;
+  for (i=a.length-1; i>0; i--) {
+    j=Math.floor(Math.random()*(i+1)); tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+
+function makeProblem(q, ans, hint, type, fixedChoices) {
+  var choices;
+  if (fixedChoices) {
+    choices = fixedChoices;
+  } else {
+    var num = (typeof ans==="number") ? ans : parseFloat(ans);
+    if (!isNaN(num) && typeof ans!=="string") {
+      var seen={}, base=Math.max(Math.abs(num),4);
+      seen[num]=true;
+      var deltas=[1,2,3,4,5,7,10,Math.ceil(base*0.08),Math.ceil(base*0.15),Math.ceil(base*0.3),6,8,12];
+      var wrongs=[], att=0;
+      while (wrongs.length<3 && att<300) {
+        var d=deltas[att%deltas.length], s=(att%2===0)?1:-1;
+        var w=Math.round((num+s*d)*100)/100;
+        if (!seen[w]) { seen[w]=true; wrongs.push(w); }
+        att++;
+      }
+      var fb=1; while(wrongs.length<3){ if(!seen[num+fb]) wrongs.push(num+fb); fb++; }
+      choices=fy([ans].concat(wrongs.slice(0,3)));
+    }
+  }
+  return {question:q, answer:ans, hint:hint, type:type, choices:choices};
+}
+
+/* ═══════════════════════════════════════
+   GRADE 8 — REGIONAL LEAGUE (MAP 251-264)
+   Pythagorean theorem, systems, simple
+   quadratics, linear functions, transformations,
+   cylinder/cone volume, square roots,
+   exponent rules, statistics (IQR/range),
+   scientific notation
+═══════════════════════════════════════ */
+function gen8th() {
+  var mathTypes=["pyth8","system8","quad8","func8","trans8","vol8","sqrt8","exp8","stats8","scino8"];
+  var themes=["free kicks","corner kicks","penalty shootouts","team stats","passing drills","goal tallies","match scores"];
+  var probs=[];
+  for (var i=0;i<200;i++) probs.push(math8(pick(mathTypes)));
+  for (var i=0;i<50;i++) probs.push(word8(pick(themes)));
+  return fy(probs);
+}
+
+function math8(type) {
+  var q,ans,hint,choices;
+  switch(type) {
+    case "pyth8": {
+      var trips=[[3,4,5],[5,12,13],[8,15,17],[6,8,10],[9,12,15],[7,24,25],[20,21,29]];
+      var t=pick(trips);
+      if (Math.random()>0.4) {
+        q="Right triangle: legs "+t[0]+" and "+t[1]+". Hypotenuse = ?";
+        ans=t[2]; hint="c^2 = a^2 + b^2, then take the square root";
+      } else {
+        q="Right triangle: hypotenuse "+t[2]+", one leg "+t[0]+". Other leg = ?";
+        ans=t[1]; hint="b^2 = c^2 - a^2";
+      }
+      break;
+    }
+    case "system8": {
+      var x=ri(1,9), y=ri(1,9);
+      q="System: x + y = "+(x+y)+" and x - y = "+(x-y)+". Find x.";
+      ans=x; hint="Add both equations to eliminate y!"; break;
+    }
+    case "quad8": {
+      var r1=ri(1,7), r2=ri(1,7);
+      q="Solve: x^2 - "+(r1+r2)+"x + "+(r1*r2)+" = 0. Larger root?";
+      ans=Math.max(r1,r2); hint="Factor as (x - a)(x - b) = 0"; break;
+    }
+    case "func8": {
+      var m=ri(-5,6), b=ri(-9,9), x=ri(-4,8);
+      q="f(x) = "+m+"x + "+b+". Find f("+x+").";
+      ans=m*x+b; hint="Substitute x and evaluate"; break;
+    }
+    case "trans8": {
+      var x=ri(-5,5), y=ri(-5,5), h=ri(-4,4), k=ri(-4,4);
+      q="Translate point ("+x+","+y+") by vector ("+h+","+k+"). New y-coordinate?";
+      ans=y+k; hint="Add the translation values to each coordinate"; break;
+    }
+    case "vol8": {
+      var r=ri(2,8), h=ri(3,12);
+      if (Math.random()>0.5) {
+        q="Volume of cylinder: radius="+r+", height="+h+" (pi=3.14, nearest whole):";
+        ans=Math.round(3.14*r*r*h); hint="V = pi x r^2 x h";
+      } else {
+        q="Volume of cone: radius="+r+", height="+h+" (pi=3.14, nearest whole):";
+        ans=Math.round((1/3)*3.14*r*r*h); hint="V = (1/3) x pi x r^2 x h";
+      }
+      break;
+    }
+    case "sqrt8": {
+      var sq=pick([4,9,16,25,36,49,64,81,100,121,144,169,196,225]);
+      q="Square root of "+sq+" = ?"; ans=Math.round(Math.sqrt(sq)); hint="What number times itself equals this?"; break;
+    }
+    case "exp8": {
+      var base=ri(2,5), e1=ri(2,4), e2=ri(1,3);
+      var rule=pick(["product","quotient","power"]);
+      if (rule==="product") {
+        q=base+"^"+e1+" x "+base+"^"+e2+" = "+base+"^?";
+        ans=e1+e2; hint="Product rule: ADD the exponents";
+      } else if (rule==="quotient") {
+        var big=Math.max(e1,e2)+1;
+        q=base+"^"+big+" / "+base+"^"+e1+" = "+base+"^?";
+        ans=big-e1; hint="Quotient rule: SUBTRACT the exponents";
+      } else {
+        q="("+base+"^"+e1+")^"+e2+" = "+base+"^?";
+        ans=e1*e2; hint="Power rule: MULTIPLY the exponents";
+      }
+      break;
+    }
+    case "stats8": {
+      var nums=[ri(2,30),ri(2,30),ri(2,30),ri(2,30),ri(2,30),ri(2,30)];
+      nums.sort(function(a,b){return a-b;});
+      if (Math.random()>0.5) {
+        q="Range of data set: "+nums.join(", ");
+        ans=nums[5]-nums[0]; hint="Range = maximum - minimum";
+      } else {
+        q="IQR of data set: "+nums.join(", ")+" (Q3 - Q1)";
+        ans=nums[4]-nums[1]; hint="IQR = Q3 (upper half median) - Q1 (lower half median)";
+      }
+      break;
+    }
+    case "scino8": {
+      var base=ri(1,9), exp=pick([2,3,4,5,6]);
+      q=base+" x 10^"+exp+" = ? (as whole number)";
+      ans=base*Math.pow(10,exp); hint="Move the decimal right by the exponent value"; break;
+    }
+    default: { var a=ri(2,9),e=ri(2,3); q=a+"^"+e+"=?"; ans=Math.pow(a,e); hint="Repeated multiplication"; }
+  }
+  return makeProblem(q,ans,hint,"math",choices);
+}
+
+function word8(theme) {
+  var teams=["FC Pythagoras","Algebra United","Real Geometry","Theorem FC","Calculus City","Stats Rovers","Function FC"];
+  var team=pick(teams);
+  var templates=[
+    function(){ var legs=pick([[3,4,5],[5,12,13],[8,15,17]]); return {q:team+" measures a diagonal pass: legs "+legs[0]+"m and "+legs[1]+"m. Length of pass?",ans:legs[2],hint:"Pythagorean theorem: c^2 = a^2 + b^2"}; },
+    function(){ var m=ri(2,6),b=ri(0,20),x=ri(1,10); return {q:"Goals scored follows f(x)="+m+"x+"+b+". After "+x+" matches, total goals?",ans:m*x+b,hint:"Substitute x into the function!"}; },
+    function(){ var x=ri(1,8),y=ri(1,8); return {q:"Home goals + away goals = "+(x+y)+". Home - away = "+(x-y)+". Find home goals.",ans:x,hint:"Add both equations to eliminate away goals!"}; },
+    function(){ var nums=[ri(1,10),ri(1,10),ri(1,10),ri(1,10),ri(1,10),ri(1,10)]; nums.sort(function(a,b){return a-b;}); return {q:team+" match scores: "+nums.join(", ")+". What is the range?",ans:nums[5]-nums[0],hint:"Range = max - min"}; },
+    function(){ var r=ri(3,9),h=ri(4,14); return {q:"A cylindrical trophy: radius="+r+"cm, height="+h+"cm. Volume? (pi=3.14, nearest whole)",ans:Math.round(3.14*r*r*h),hint:"V = pi x r^2 x h"}; }
+  ];
+  var t=pick(templates)();
+  return makeProblem(t.q,t.ans,t.hint,"word");
+}
+
+/* ═══════════════════════════════════════
+   GRADE 9 — NATIONAL CUP (MAP 264-279)
+   Linear & quadratic equations, inequalities,
+   systems with substitution, slope-intercept,
+   exponential growth, probability, geometry
+   (similar triangles, arc length), absolute
+   value, compound interest intro
+═══════════════════════════════════════ */
+function gen9th() {
+  var mathTypes=["linear9","quadform9","ineq9","subst9","slope9","expgrow9","prob9","simtri9","absval9","interest9"];
+  var themes=["transfer fees","tournament brackets","player ratings","league tables","sponsorship deals","stadium capacity","training stats"];
+  var probs=[];
+  for (var i=0;i<200;i++) probs.push(math9(pick(mathTypes)));
+  for (var i=0;i<50;i++) probs.push(word9(pick(themes)));
+  return fy(probs);
+}
+
+function math9(type) {
+  var q,ans,hint,choices;
+  switch(type) {
+    case "linear9": {
+      var m=ri(1,6), b=ri(-15,15), y=ri(-10,30);
+      var x=Math.round((y-b)/m*100)/100;
+      if (Number.isInteger(x)) {
+        q=m+"x + "+b+" = "+y+". Solve for x.";
+        ans=x; hint="Subtract the constant, then divide by the coefficient";
+      } else {
+        var a2=ri(2,8), b2=ri(1,12), x2=ri(1,10);
+        q=a2+"x + "+b2+" = "+(a2*x2+b2)+". Solve for x.";
+        ans=x2; hint="Subtract "+b2+", then divide by "+a2;
+      }
+      break;
+    }
+    case "quadform9": {
+      var r1=ri(-5,5), r2=ri(-5,5);
+      var A=1, B=-(r1+r2), C=r1*r2;
+      var Bs=B>=0?"+"+B:B, Cs=C>=0?"+"+C:C;
+      q="x^2 "+Bs+"x "+Cs+" = 0. Solve using factoring. Larger root?";
+      ans=Math.max(r1,r2); hint="Find two numbers that multiply to "+C+" and add to "+B; break;
+    }
+    case "ineq9": {
+      var a=ri(2,6), b=ri(1,20), c=ri(a+1,a*10+b);
+      var x=Math.floor((c-b)/a);
+      q=a+"x + "+b+" < "+c+". Largest integer solution for x?";
+      ans=x; hint="Solve like an equation, check the inequality direction"; break;
+    }
+    case "subst9": {
+      var x=ri(1,8), y=ri(1,8);
+      var m1=ri(1,4);
+      q="y = "+m1+"x + "+(y-m1*x)+" and x + y = "+(x+y)+". Find x.";
+      ans=x; hint="Substitute the first equation into the second!"; break;
+    }
+    case "slope9": {
+      var m=ri(-5,5), b=ri(-10,10);
+      var type2=pick(["slope","intercept","point"]);
+      if (type2==="slope") {
+        q="Line: y = "+m+"x + "+b+". What is the slope?";
+        ans=m; hint="In y = mx + b, m is the slope";
+      } else if (type2==="intercept") {
+        q="Line: y = "+m+"x + "+b+". y-intercept = ?";
+        ans=b; hint="In y = mx + b, b is the y-intercept";
+      } else {
+        var x2=ri(-3,8);
+        q="Line: y = "+m+"x + "+b+". When x = "+x2+", y = ?";
+        ans=m*x2+b; hint="Substitute x and evaluate";
+      }
+      break;
+    }
+    case "expgrow9": {
+      var start=ri(2,20), rate=pick([2,3,4,5]), years=pick([2,3,4]);
+      q="Starting value "+start+", doubles every year (x"+rate+"), after "+years+" years = ?";
+      ans=start*Math.pow(rate,years); hint="Multiply by the growth factor for each year"; break;
+    }
+    case "prob9": {
+      var total=ri(10,30), favA=ri(1,total-2), favB=ri(1,total-favA-1);
+      var g=gcd(favA+favB,total);
+      q="Bag: "+favA+" red, "+favB+" blue, "+(total-favA-favB)+" white. P(red or blue)? Numerator with denominator "+(total/g)+":";
+      ans=(favA+favB)/g; hint="P(A or B) = (favA + favB) / total, then simplify"; break;
+    }
+    case "simtri9": {
+      var scale=ri(2,4), a=ri(3,9), b=ri(4,12), c=ri(5,15);
+      var side=pick(["a","b","c"]);
+      if (side==="a") {
+        q="Similar triangles, scale factor "+scale+". Smaller triangle has side "+a+". Larger side = ?";
+        ans=a*scale; hint="Multiply each side by the scale factor";
+      } else if (side==="b") {
+        q="Similar triangles, scale factor "+scale+". Larger triangle has side "+(b*scale)+". Smaller side = ?";
+        ans=b; hint="Divide the larger side by the scale factor";
+      } else {
+        var hyp=pick([5,10,13,15,17,25]);
+        var leg=pick([3,6,5,9,8,7]);
+        q="30-60-90 triangle. Short leg = "+leg+". Hypotenuse = ?";
+        ans=leg*2; hint="In a 30-60-90 triangle, hypotenuse = 2 x short leg";
+      }
+      break;
+    }
+    case "absval9": {
+      var c=ri(1,12), target=ri(0,5);
+      q="|x - "+c+"| = "+target+". Larger solution for x = ?";
+      ans=c+target; hint="|expression| = k means expression = k OR expression = -k"; break;
+    }
+    case "interest9": {
+      var P=ri(2,20)*100, r=pick([5,10,15,20,25]), t=ri(1,4);
+      q="Simple interest: principal $"+P+", rate "+r+"% per year, "+t+" year(s). Interest earned = ?";
+      ans=P*r/100*t; hint="Interest = Principal x Rate/100 x Time"; break;
+    }
+    default: { var a=ri(2,9),b=ri(1,15),x=ri(1,8); q=a+"x+"+b+"="+(a*x+b)+". Find x."; ans=x; hint="Solve for x!"; }
+  }
+  return makeProblem(q,ans,hint,"math",choices);
+}
+
+function word9(theme) {
+  var players=["Star striker Alex","Midfielder Jordan","Goalkeeper Riley","Defender Morgan","Winger Casey"];
+  var player=pick(players);
+  var templates=[
+    function(){ var P=ri(2,20)*100,r=pick([5,10,15]),t=ri(1,3); return {q:player+" invests $"+P+" in "+theme+" at "+r+"% simple interest for "+t+" year(s). Interest earned?",ans:P*r/100*t,hint:"Interest = P x r/100 x t"}; },
+    function(){ var a=ri(2,6),b=ri(1,20),tot=ri(20,80); var x=Math.floor((tot-b)/a); if(x<1)x=1; return {q:"Club spends "+a+"x + "+b+" on "+theme+" where x is weeks. Budget is "+(a*x+b)+". Max weeks?",ans:x,hint:"Solve the equation for x!"}; },
+    function(){ var start=ri(100,500),rate=2,yrs=pick([2,3,4]); return {q:"Stadium attendance starts at "+start+" and doubles each year for "+yrs+" years. Final attendance?",ans:start*Math.pow(rate,yrs),hint:"Multiply by 2 for each year!"}; },
+    function(){ var x=ri(1,8),y=ri(1,8),m=ri(1,3); return {q:"Player "+player+" scores y = "+m+"x + "+(y-m*x)+" goals per match. Total with x + y = "+(x+y)+". Find x.",ans:x,hint:"Substitute and solve the system!"}; },
+    function(){ var c=ri(3,15),tg=ri(1,5); return {q:player+" needs |goals - "+c+"| = "+tg+". What is the maximum possible goals value?",ans:c+tg,hint:"|a - b| = k gives a = b+k OR a = b-k"}; }
+  ];
+  var t=pick(templates)();
+  return makeProblem(t.q,t.ans,t.hint,"word");
+}
+
+/* ═══════════════════════════════════════
+   GRADE 10 — WORLD FINAL (MAP 279-290)
+   Quadratic formula, advanced functions,
+   trigonometry (sin/cos/tan), logarithms
+   intro, polynomial operations, rational
+   expressions, sequences, circle theorems,
+   vectors intro, statistical inference
+═══════════════════════════════════════ */
+function gen10th() {
+  var mathTypes=["quadfml10","advfunc10","trig10","logintro10","polyops10","arith10","geo10seq","circthm10","ratechange10","stats10adv"];
+  var themes=["world cup stats","championship data","elite training","scouting reports","match analysis","stadium acoustics","biomechanics"];
+  var probs=[];
+  for (var i=0;i<200;i++) probs.push(math10(pick(mathTypes)));
+  for (var i=0;i<50;i++) probs.push(word10(pick(themes)));
+  return fy(probs);
+}
+
+function math10(type) {
+  var q,ans,hint,choices;
+  switch(type) {
+    case "quadfml10": {
+      var r1=ri(-4,4), r2=ri(-4,4);
+      var B=-(r1+r2), C=r1*r2;
+      var Bs=B>=0?(B===0?"":"+"+B):(""+B);
+      var Cs=C>=0?(C===0?"":"+"+C):(""+C);
+      q="Quadratic formula: x^2"+Bs+"x"+Cs+" = 0. Sum of both roots = ?";
+      ans=r1+r2; hint="Sum of roots = -b/a = -(coefficient of x)"; break;
+    }
+    case "advfunc10": {
+      var a=ri(1,4), h=ri(-3,3), k=ri(-5,5), x=ri(-2,5);
+      q="g(x) = "+a+"(x - "+h+")^2 + "+k+". Find g("+x+").";
+      ans=a*Math.pow(x-h,2)+k; hint="Substitute x, work inside the parentheses first"; break;
+    }
+    case "trig10": {
+      var trips=[[3,4,5],[5,12,13],[8,15,17],[7,24,25],[9,40,41]];
+      var t=pick(trips);
+      var fn=pick(["sin","cos","tan"]);
+      if (fn==="sin") {
+        q="Right triangle: opposite="+t[0]+", hypotenuse="+t[2]+". sin(angle) as a fraction (numerator)?";
+        var g=gcd(t[0],t[2]); ans=t[0]/g;
+        choices=[t[0]/g+"/"+(t[2]/g), t[1]/g+"/"+(t[2]/g), t[0]/g+"/"+(t[1]/g), t[2]/g+"/"+(t[0]/g)];
+        hint="sin = opposite / hypotenuse";
+      } else if (fn==="cos") {
+        q="Right triangle: adjacent="+t[1]+", hypotenuse="+t[2]+". cos(angle) as a fraction (numerator)?";
+        var g=gcd(t[1],t[2]); ans=t[1]/g;
+        choices=[t[1]/g+"/"+(t[2]/g), t[0]/g+"/"+(t[2]/g), t[1]/g+"/"+(t[0]/g), t[2]/g+"/"+(t[1]/g)];
+        hint="cos = adjacent / hypotenuse";
+      } else {
+        q="Right triangle: opposite="+t[0]+", adjacent="+t[1]+". tan(angle) = ? (as decimal, 2dp)";
+        ans=Math.round(t[0]/t[1]*100)/100; hint="tan = opposite / adjacent";
+      }
+      break;
+    }
+    case "logintro10": {
+      var base=pick([2,3,5,10]), exp=ri(1,4);
+      q="log base "+base+" of "+Math.pow(base,exp)+" = ?";
+      ans=exp; hint="Ask: "+base+" to what power equals the number?"; break;
+    }
+    case "polyops10": {
+      var a=ri(1,5), b=ri(1,8), c=ri(1,5), d=ri(1,8);
+      var type2=pick(["add","sub","mult"]);
+      if (type2==="add") {
+        q="("+a+"x + "+b+") + ("+c+"x + "+d+") = ?x + ?. Find the x-coefficient.";
+        ans=a+c; hint="Combine like terms: add the x coefficients";
+      } else if (type2==="sub") {
+        q="("+a+"x + "+b+") - ("+c+"x + "+d+") = ?x + ?. Find the x-coefficient.";
+        ans=a-c; hint="Distribute the negative sign, then combine like terms";
+      } else {
+        q="(x + "+b+")(x + "+d+") = x^2 + ?x + "+( b*d)+". Find the missing coefficient.";
+        ans=b+d; hint="FOIL: the middle term is the sum of the two constants";
+      }
+      break;
+    }
+    case "arith10": {
+      var first=ri(2,15), diff=ri(2,10), n=ri(5,12);
+      var type2=pick(["nth","sum"]);
+      if (type2==="nth") {
+        q="Arithmetic sequence: first term="+first+", common difference="+diff+". What is the "+n+"th term?";
+        ans=first+(n-1)*diff; hint="nth term = first + (n-1) x difference";
+      } else {
+        var terms=ri(4,8);
+        q="Arithmetic series: first="+first+", last="+(first+(terms-1)*diff)+", "+terms+" terms. Sum = ?";
+        ans=terms*(first+(first+(terms-1)*diff))/2; hint="Sum = n/2 x (first + last)";
+      }
+      break;
+    }
+    case "geo10seq": {
+      var first=ri(2,8), ratio=pick([2,3,4]), n=pick([3,4,5,6]);
+      q="Geometric sequence: first term="+first+", common ratio="+ratio+". What is the "+n+"th term?";
+      ans=first*Math.pow(ratio,n-1); hint="nth term = first x ratio^(n-1)"; break;
+    }
+    case "circthm10": {
+      var type2=pick(["arc","sector","chord"]);
+      if (type2==="arc") {
+        var r=ri(4,12), deg=pick([30,45,60,90,120,180]);
+        q="Arc length: radius="+r+", central angle="+deg+" degrees (pi=3.14). Round to 1 decimal.";
+        ans=Math.round(2*3.14*r*deg/360*10)/10; hint="Arc length = 2 x pi x r x (angle/360)";
+      } else if (type2==="sector") {
+        var r=ri(4,10), deg=pick([30,45,60,90,120]);
+        q="Sector area: radius="+r+", angle="+deg+" degrees (pi=3.14). Nearest whole number.";
+        ans=Math.round(3.14*r*r*deg/360); hint="Sector area = pi x r^2 x (angle/360)";
+      } else {
+        var inscribed=ri(20,85);
+        q="Inscribed angle = "+inscribed+" degrees. Central angle subtending same arc = ?";
+        ans=inscribed*2; hint="Central angle = 2 x inscribed angle"; break;
+      }
+      break;
+    }
+    case "ratechange10": {
+      var m=ri(2,8), b=ri(0,15), x1=ri(1,5), x2=x1+ri(1,4);
+      q="Linear function: f(x) = "+m+"x + "+b+". Average rate of change from x="+x1+" to x="+x2+" = ?";
+      ans=m; hint="Average rate of change of a linear function = its slope"; break;
+    }
+    case "stats10adv": {
+      var mean=ri(50,80), sd=ri(3,10);
+      var type2=pick(["zscore","pctile"]);
+      if (type2==="zscore") {
+        var x=mean+pick([-2,-1,1,2])*sd;
+        q="Mean="+mean+", SD="+sd+". Data point x="+x+". z-score = ?";
+        ans=(x-mean)/sd; hint="z = (x - mean) / standard deviation";
+      } else {
+        var z=pick([-2,-1,0,1,2]);
+        q="In a normal distribution, approximately what % of data falls below z="+z+"? (use 2%,16%,50%,84%,98%)";
+        var pcts={"-2":2,"-1":16,"0":50,"1":84,"2":98};
+        ans=pcts[String(z)]; hint="Use the empirical rule: 68% within 1 SD, 95% within 2 SD"; break;
+      }
+      break;
+    }
+    default: { var a=ri(1,4),h=ri(-3,3),k=ri(-5,5); q=a+"(x-"+h+")^2+"+k+" when x="+h+"=?"; ans=k; hint="When x=h, the squared term is 0!"; }
+  }
+  return makeProblem(q,ans,hint,"math",choices);
+}
+
+function word10(theme) {
+  var scouts=["Chief scout Davies","Analyst Torres","Coach Petrov","Director Silva","Strategist Kim"];
+  var scout=pick(scouts);
+  var templates=[
+    function(){ var base=pick([2,3,5,10]),exp=ri(2,4); return {q:scout+" encodes "+theme+" data: log_"+base+"("+Math.pow(base,exp)+") = ?",ans:exp,hint:"What power does the base need to reach the number?"}; },
+    function(){ var first=ri(5,15),diff=ri(3,8),n=ri(4,8); return {q:"Player performance in "+theme+": starts at "+first+", improves by "+diff+" each week. Week "+n+" score?",ans:first+(n-1)*diff,hint:"nth term = first + (n-1) x difference"}; },
+    function(){ var first=ri(2,5),ratio=pick([2,3]),n=pick([3,4,5]); return {q:"Fan base for "+theme+" starts at "+first+"k, triples each year. After "+n+" years?",ans:first*Math.pow(ratio,n-1)+"k",hint:"Geometric: multiply by ratio each time"}; },
+    function(){ var r=ri(5,14),deg=pick([30,60,90,120,180]); return {q:scout+" calculates arc length of "+theme+" pitch curve: r="+r+"m, angle="+deg+" deg (pi=3.14, 1dp).",ans:Math.round(2*3.14*r*deg/360*10)/10,hint:"Arc = 2 x pi x r x angle/360"}; },
+    function(){ var mean=ri(55,80),sd=ri(4,10),z=pick([-1,1]); var x=mean+z*sd; return {q:""+theme+" scores: mean="+mean+", SD="+sd+". z-score of "+x+" = ?",ans:z,hint:"z = (x - mean) / SD"}; }
+  ];
+  var t=pick(templates)();
+  return makeProblem(t.q,t.ans,t.hint,"word");
+}
+
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+var TOTAL=250, PASS=0.90, MAP_MIN=251, MAP_MAX=290;
+var GENS=[gen8th,gen9th,gen10th];
+
+var STATE={
+  mapScore:251, lives:3, totalPoints:0, streak:0, currentLeague:0,
+  leagues:[
+    {name:"Regional League", emoji:"🏟️", unlocked:true,  completed:false, answered:0, correct:0, problems:[], order:[], pos:0},
+    {name:"National Cup",    emoji:"🏆", unlocked:false, completed:false, answered:0, correct:0, problems:[], order:[], pos:0},
+    {name:"World Final",     emoji:"🌍", unlocked:false, completed:false, answered:0, correct:0, problems:[], order:[], pos:0}
+  ]
+};
+
+/* ═══════════════════════════════════════
+   QUEUE
+═══════════════════════════════════════ */
+function initQueue(lg,genFn) {
+  lg.problems=genFn();
+  lg.order=fy(Array.from({length:TOTAL},function(_,i){return i;}));
+  lg.pos=0;
+}
+function currentQ(lg) {
+  if (lg.pos>=TOTAL) {
+    lg.order=fy(Array.from({length:TOTAL},function(_,i){return i;}));
+    lg.pos=0; lg.problems=GENS[STATE.currentLeague]();
+  }
+  return lg.problems[lg.order[lg.pos]];
+}
+function advQ(lg){ lg.pos++; }
+
+/* ═══════════════════════════════════════
+   PERSISTENCE
+═══════════════════════════════════════ */
+var SAVE_KEY="soccermathpro_v1";
+
+/* Storage: window.name (works in GitHub Pages & Google Sites) + fallbacks */
+function _storeGet(key){
+  try{var s=JSON.parse(window.name||"{}");if(s[key])return JSON.parse(s[key]);}catch(e){}
+  try{var r=sessionStorage.getItem(key);if(r)return JSON.parse(r);}catch(e){}
+  try{var r=localStorage.getItem(key);if(r)return JSON.parse(r);}catch(e){}
+  return null;
+}
+function _storeSet(key,val){
+  var json=JSON.stringify(val);
+  try{var s={};try{s=JSON.parse(window.name||"{}")||{};}catch(e){}s[key]=json;window.name=JSON.stringify(s);}catch(e){}
+  try{sessionStorage.setItem(key,json);}catch(e){}
+  try{localStorage.setItem(key,json);}catch(e){}
+}
+function _storeDel(key){
+  try{var s={};try{s=JSON.parse(window.name||"{}")||{};}catch(e){}delete s[key];window.name=JSON.stringify(s);}catch(e){}
+  try{sessionStorage.removeItem(key);}catch(e){}
+  try{localStorage.removeItem(key);}catch(e){}
+}
+
+function save(){
+  try{
+    _storeSet(SAVE_KEY,{
+      mapScore:STATE.mapScore, lives:STATE.lives, totalPoints:STATE.totalPoints,
+      streak:STATE.streak, currentLeague:STATE.currentLeague,
+      leagues:STATE.leagues.map(function(lg){
+        return {unlocked:lg.unlocked,completed:lg.completed,answered:lg.answered,correct:lg.correct,order:lg.order,pos:lg.pos};
+      })
+    });
+  }catch(e){}
+}
+function loadSave(){
+  try{
+    var s=_storeGet(SAVE_KEY);
+    if(!s||!s.leagues||s.leagues.length!==3) return null;
+    return s;
+  }catch(e){return null;}
+}
+function clearSave(){ _storeDel(SAVE_KEY); }
+function applySnap(snap){
+  STATE.mapScore=snap.mapScore; STATE.lives=snap.lives; STATE.totalPoints=snap.totalPoints;
+  STATE.streak=snap.streak||0; STATE.currentLeague=snap.currentLeague||0;
+  snap.leagues.forEach(function(sl,i){
+    var lg=STATE.leagues[i];
+    lg.unlocked=sl.unlocked; lg.completed=sl.completed; lg.answered=sl.answered; lg.correct=sl.correct;
+    lg.problems=GENS[i]();
+    lg.order=(Array.isArray(sl.order)&&sl.order.length===TOTAL)?sl.order:fy(Array.from({length:TOTAL},function(_,k){return k;}));
+    lg.pos=sl.pos||0;
+  });
+}
+
+/* ═══════════════════════════════════════
+   SCREENS
+═══════════════════════════════════════ */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});
+  document.getElementById(id).classList.add("active");
+}
+
+function startGame(){
+  STATE.leagues.forEach(function(lg,i){initQueue(lg,GENS[i]);});
+  save(); updateMapUI(); showScreen("map-screen");
+}
+
+/* ═══════════════════════════════════════
+   MAP UI
+═══════════════════════════════════════ */
+function updateMapUI(){
+  document.getElementById("hud-map").textContent=STATE.mapScore;
+  document.getElementById("map-val").textContent=STATE.mapScore;
+  updateLives();
+  STATE.leagues.forEach(function(lg,i){
+    var card=document.getElementById("lcard-"+i);
+    var bar=document.getElementById("lbar-"+i);
+    var ptext=document.getElementById("lptext-"+i);
+    var acc=lg.answered>0?Math.round(lg.correct/lg.answered*100):0;
+    card.className="league-card";
+    if(!lg.unlocked){ card.classList.add("locked"); ptext.textContent="🔒 Locked"; }
+    else if(lg.completed){ card.classList.add("completed"); bar.style.width="100%"; ptext.textContent="✅ "+acc+"% — Qualified!"; }
+    else{
+      card.classList.add(i===STATE.currentLeague?"current":"available");
+      var pct=Math.round(lg.answered/TOTAL*100);
+      bar.style.width=pct+"%";
+      ptext.textContent=lg.answered>0?(pct+"% done · "+acc+"% correct"):"0% Complete";
+    }
+  });
+  var pct=Math.max(0,Math.min(100,(STATE.mapScore-MAP_MIN)/(MAP_MAX-MAP_MIN)*100));
+  document.getElementById("map-bar").style.width=pct+"%";
+}
+function updateLives(){
+  document.getElementById("hud-lives").textContent="💚".repeat(Math.max(0,STATE.lives))+"🖤".repeat(Math.max(0,3-STATE.lives));
+}
+
+/* ═══════════════════════════════════════
+   ENTER LEAGUE
+═══════════════════════════════════════ */
+function enterLeague(idx){
+  var lg=STATE.leagues[idx];
+  if(!lg.unlocked) return;
+  STATE.currentLeague=idx;
+  if(!lg.problems.length) initQueue(lg,GENS[idx]);
+  showQuestion(); showScreen("question-screen");
+}
+
+/* ═══════════════════════════════════════
+   COMMENTATORS
+═══════════════════════════════════════ */
+var COMMS=[
+  {name:"Gary Lineker 🎙️",face:"🎙️",msgs:["And the player steps up!","Eyes on the prize!","Precision and focus!","This is the moment!"]},
+  {name:"Pitch Coach 📋",  face:"📋",msgs:["Work through it!","Trust your training!","Read the question carefully!","You have the skills!"]},
+  {name:"Captain ⚽",      face:"⚽",msgs:["Lead from the front!","Champions think clearly!","Concentrate!","Take your time — then strike!"]}
+];
+
+/* ═══════════════════════════════════════
+   SHOW QUESTION
+═══════════════════════════════════════ */
+function showQuestion(){
+  var lg=STATE.leagues[STATE.currentLeague];
+  var q=currentQ(lg);
+
+  document.getElementById("q-league").textContent=lg.emoji+" "+lg.name;
+  document.getElementById("q-num").textContent="Question "+(lg.answered+1)+" of "+TOTAL;
+  document.getElementById("q-prog").style.width=(lg.answered/TOTAL*100)+"%";
+  document.getElementById("q-streak").textContent="🔥 "+STATE.streak+" streak";
+  document.getElementById("q-pts").textContent="⚽ "+STATE.totalPoints+" goals";
+
+  var comm=COMMS[lg.answered%3];
+  document.getElementById("comm-face").textContent=comm.face;
+  document.getElementById("comm-name").textContent=comm.name;
+  document.getElementById("comm-msg").textContent=comm.msgs[lg.answered%comm.msgs.length];
+
+  var badge=document.getElementById("q-badge");
+  badge.textContent=(q.type==="word")?"📋 Word Problem":"🔢 Math";
+  badge.className="q-badge "+(q.type==="word"?"badge-word":"badge-math");
+  document.getElementById("q-text").textContent=q.question;
+  document.getElementById("q-hint").textContent=q.hint?("💡 "+q.hint):"";
+
+  document.getElementById("feedback").className="feedback";
+  document.getElementById("feedback").textContent="";
+  document.getElementById("next-wrap").style.display="none";
+
+  var area=document.getElementById("answer-area");
+  area.innerHTML="";
+
+  if(q.choices&&q.choices.length){
+    var grid=document.createElement("div");
+    grid.className="choices-grid";
+    q.choices.forEach(function(c){
+      var btn=document.createElement("button");
+      btn.type="button"; btn.className="choice-btn"; btn.textContent=c;
+      btn.onclick=function(){checkMC(c,q,btn,grid);};
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
+  } else {
+    var wrap=document.createElement("div"); wrap.className="free-wrap";
+    var inp=document.createElement("input");
+    inp.className="free-input"; inp.id="free-inp"; inp.type="text";
+    inp.placeholder="Your answer...";
+    inp.setAttribute("autocomplete","off"); inp.setAttribute("autocorrect","off");
+    inp.setAttribute("autocapitalize","none"); inp.setAttribute("spellcheck","false");
+    inp.setAttribute("inputmode",q.type==="word"?"text":"decimal");
+    inp.addEventListener("keydown",function(e){if(e.key==="Enter") checkFree(q);});
+    var chkBtn=document.createElement("button");
+    chkBtn.type="button"; chkBtn.className="btn-check"; chkBtn.textContent="Check";
+    chkBtn.onclick=function(){checkFree(q);};
+    wrap.appendChild(inp); wrap.appendChild(chkBtn); area.appendChild(wrap);
+    var isTouch=("ontouchstart" in window)||(navigator.maxTouchPoints>0);
+    if(!isTouch) setTimeout(function(){inp.focus();},100);
+  }
+}
+
+function checkMC(chosen,q,btn,grid){
+  grid.querySelectorAll(".choice-btn").forEach(function(b){b.disabled=true;});
+  var ok=String(chosen).toLowerCase()===String(q.answer).toLowerCase()||
+         (typeof chosen==="number"&&Math.abs(chosen-q.answer)<0.05);
+  btn.classList.add(ok?"correct-ans":"wrong-ans");
+  if(!ok) grid.querySelectorAll(".choice-btn").forEach(function(b){
+    if(String(b.textContent).toLowerCase()===String(q.answer).toLowerCase()) b.classList.add("correct-ans");
+  });
+  handleResult(ok,q);
+}
+
+function checkFree(q){
+  var inp=document.getElementById("free-inp");
+  if(!inp||inp.value.trim()==="") return;
+  inp.disabled=true;
+  var val=inp.value.trim();
+  var ua=isNaN(val)?val.toLowerCase():Math.round(parseFloat(val)*100)/100;
+  var ca=(typeof q.answer==="string")?q.answer.toLowerCase():Math.round(q.answer*100)/100;
+  var ok=String(ua)===String(ca)||(typeof ua==="number"&&typeof ca==="number"&&Math.abs(ua-ca)<0.05);
+  inp.style.borderColor=ok?"var(--neon)":"var(--red)";
+  handleResult(ok,q);
+}
+
+function handleResult(ok,q){
+  var lg=STATE.leagues[STATE.currentLeague];
+  lg.answered++; advQ(lg);
+  var fb=document.getElementById("feedback");
+  if(ok){
+    lg.correct++; STATE.streak++;
+    STATE.totalPoints+=10+(STATE.streak>=5?5:0)+(STATE.streak>=10?5:0);
+    if(lg.answered%5===0) STATE.mapScore=Math.min(MAP_MAX,STATE.mapScore+1);
+    var msgs=["⚽ GOAL! Brilliant!","✅ Correct — clean strike!","🏆 World class!","🔥 On fire!","🎯 Pinpoint accuracy!","💚 Outstanding!"];
+    fb.textContent=msgs[Math.floor(Math.random()*msgs.length)]+(STATE.streak>=5?" 🔥 "+STATE.streak+" STREAK BONUS!":"");
+    fb.className="feedback show ok";
+  } else {
+    STATE.streak=0; STATE.lives=Math.max(0,STATE.lives-1); updateLives();
+    fb.textContent="Not quite — the answer is "+q.answer+". Keep pushing! 💪";
+    fb.className="feedback show bad";
+  }
+  document.getElementById("q-streak").textContent="🔥 "+STATE.streak+" streak";
+  document.getElementById("q-pts").textContent="⚽ "+STATE.totalPoints+" goals";
+  if(lg.answered>=TOTAL){
+    save(); setTimeout(leagueEnd,1300);
+  } else {
+    if(lg.answered%50===0&&STATE.lives<3){STATE.lives=Math.min(3,STATE.lives+1);updateLives();}
+    document.getElementById("next-wrap").style.display="block";
+    save();
+  }
+}
+
+function nextQuestion(){showQuestion();}
+
+/* ═══════════════════════════════════════
+   LEAGUE END
+═══════════════════════════════════════ */
+function leagueEnd(){
+  var lg=STATE.leagues[STATE.currentLeague];
+  var acc=lg.answered>0?lg.correct/lg.answered:0;
+  var passed=acc>=PASS;
+
+  var icons=["🏟️","🏆","🌍"];
+  var titles=["Regional League — Full Time!","National Cup — Final Whistle!","World Final — Championship!"];
+  var descs=[
+    passed?"You qualified with 90%+! The National Cup awaits. 🏆":"Didn't qualify. Need 90% to advance. You can do it!",
+    passed?"Incredible performance! The World Final is open. 🌍":"So close! Hit 90% to reach the World Final.",
+    "You won the World Final! You are the Soccer Math World Champion! 🌍🏆"
+  ];
+
+  document.getElementById("lu-icon").textContent=passed?icons[STATE.currentLeague]:"📋";
+  document.getElementById("lu-title").textContent=titles[STATE.currentLeague];
+  document.getElementById("lu-desc").textContent=descs[STATE.currentLeague];
+  document.getElementById("lu-correct").textContent=lg.correct;
+  document.getElementById("lu-acc").textContent=Math.round(acc*100)+"%";
+
+  var gain=Math.round((lg.correct/TOTAL)*13);
+  STATE.mapScore=Math.min(MAP_MAX,STATE.mapScore+gain);
+  document.getElementById("lu-gain").textContent="+"+gain;
+
+  if(passed){
+    lg.completed=true;
+    if(STATE.currentLeague<2){
+      STATE.leagues[STATE.currentLeague+1].unlocked=true;
+      document.getElementById("lu-btn").textContent="Enter "+STATE.leagues[STATE.currentLeague+1].name+" ▶";
+    } else {
+      document.getElementById("lu-btn").textContent="Claim the Trophy! 🏆";
+    }
+    save(); spawnConfetti();
+  } else {
+    lg.answered=0; lg.correct=0; initQueue(lg,GENS[STATE.currentLeague]);
+    document.getElementById("lu-btn").textContent="Try Again ▶";
+    save();
+  }
+  showScreen("levelup-screen");
+}
+
+function afterLevelUp(){
+  var lg=STATE.leagues[STATE.currentLeague];
+  if(lg.completed&&STATE.currentLeague===2){
+    clearSave();
+    document.getElementById("final-score").textContent=STATE.mapScore;
+    spawnConfetti(); spawnConfetti(); showScreen("win-screen");
+    return;
+  }
+  if(lg.completed&&STATE.currentLeague<2) STATE.currentLeague++;
+  save(); updateMapUI(); showScreen("map-screen");
+}
+
+function playAgain(){
+  clearSave();
+  STATE.mapScore=251; STATE.lives=3; STATE.totalPoints=0; STATE.streak=0; STATE.currentLeague=0;
+  STATE.leagues.forEach(function(lg,i){lg.unlocked=(i===0);lg.completed=false;lg.answered=0;lg.correct=0;initQueue(lg,GENS[i]);});
+  updateMapUI(); showScreen("map-screen");
+}
+
+/* ═══════════════════════════════════════
+   CONFETTI
+═══════════════════════════════════════ */
+function spawnConfetti(){
+  var cols=["#00ff6e","#f5c518","#1a8cff","#ff3d57","#ffffff","#ff9d00","#00cc58"];
+  for(var i=0;i<90;i++){
+    var el=document.createElement("div"); el.className="confetti-piece";
+    var s=6+Math.random()*10;
+    el.style.cssText="left:"+(Math.random()*100)+"vw;width:"+s+"px;height:"+s+"px;background:"+cols[Math.floor(Math.random()*cols.length)]+";border-radius:"+(Math.random()>0.5?"50%":"2px")+";animation-duration:"+(1.5+Math.random()*2.5)+"s;animation-delay:"+(Math.random()*0.8)+"s";
+    document.body.appendChild(el);
+    setTimeout(function(){el.remove();},4500);
+  }
+}
+
+/* ═══════════════════════════════════════
+   PITCH BACKGROUND
+═══════════════════════════════════════ */
+function buildPitch(){
+  var bg=document.getElementById("pitch-bg");
+  if(!bg) return;
+  // Diagonal stripes
+  for(var i=0;i<5;i++){
+    var s=document.createElement("div"); s.className="pitch-stripe";
+    s.style.cssText="left:"+(i*22-5)+"%;"+"width:14%;";
+    bg.appendChild(s);
+  }
+  // Horizontal pitch lines
+  for(var i=0;i<4;i++){
+    var l=document.createElement("div"); l.className="pitch-line";
+    l.style.cssText="left:0;right:0;top:"+(20+i*20)+"%;height:1px;";
+    bg.appendChild(l);
+  }
+  // Vertical pitch lines
+  for(var i=0;i<3;i++){
+    var l=document.createElement("div"); l.className="pitch-line";
+    l.style.cssText="top:0;bottom:0;left:"+(25+i*25)+"%;width:1px;";
+    bg.appendChild(l);
+  }
+  // Corner arcs
+  var corners=[{top:"-100px",left:"-100px"},{top:"-100px",right:"-100px"},{bottom:"-100px",left:"-100px"},{bottom:"-100px",right:"-100px"}];
+  corners.forEach(function(c){
+    var a=document.createElement("div"); a.className="corner-arc";
+    var css=""; for(var k in c) css+=k+":"+c[k]+";";
+    a.style.cssText=css; bg.appendChild(a);
+  });
+  // Floating balls
+  for(var i=0;i<8;i++){
+    var b=document.createElement("div"); b.className="ball-bg"; b.textContent="⚽";
+    b.style.cssText="left:"+(Math.random()*95)+"%;"+"top:"+(Math.random()*90)+"%;"+"animation-duration:"+(10+Math.random()*12)+"s;animation-delay:"+(Math.random()*8)+"s";
+    bg.appendChild(b);
+  }
+  // Floodlights
+  var lights=[{top:"-60px",left:"20%"},{top:"-60px",right:"20%"}];
+  lights.forEach(function(l){
+    var fl=document.createElement("div"); fl.className="floodlight";
+    var s=300+Math.random()*200;
+    var css="width:"+s+"px;height:"+s+"px;animation-duration:"+(3+Math.random()*3)+"s;";
+    for(var k in l) css+=k+":"+l[k]+";";
+    fl.style.cssText=css; bg.appendChild(fl);
+  });
+}
+
+/* ═══════════════════════════════════════
+   RESUME CHECK
+═══════════════════════════════════════ */
+function resumeGame(){ updateMapUI(); showScreen("map-screen"); }
+
+function startOver(){
+  clearSave();
+  document.getElementById("resume-panel").style.display="none";
+  document.getElementById("start-btn").style.display="";
+  STATE.mapScore=251;STATE.lives=3;STATE.totalPoints=0;STATE.streak=0;STATE.currentLeague=0;
+  STATE.leagues.forEach(function(lg,i){lg.unlocked=(i===0);lg.completed=false;lg.answered=0;lg.correct=0;lg.problems=[];lg.order=[];lg.pos=0;});
+}
+
+function checkResume(){
+  try{
+    var snap=loadSave();
+    if(!snap) return;
+    try{applySnap(snap);}catch(e){clearSave();return;}
+
+    var lg=STATE.leagues[STATE.currentLeague];
+    var acc=lg.answered>0?Math.round(lg.correct/lg.answered*100):0;
+    var pctDone=Math.round(lg.answered/250*100);
+
+    var detail=document.getElementById("resume-detail");
+    if(detail){
+      detail.innerHTML=
+        lg.emoji+" <strong style=\"color:var(--white)\">" +lg.name+"</strong>"
+      +" &nbsp;·&nbsp; Q"+lg.answered+"/250"
+      +(lg.answered>0?" &nbsp;·&nbsp; "+pctDone+"% done &nbsp;·&nbsp; "+acc+"% correct":"")
+      +"<br><span style=\"color:var(--gold)\">MAP Rating: "+snap.mapScore+"</span>";
+    }
+
+    var panel=document.getElementById("resume-panel");
+    var startBtn=document.getElementById("start-btn");
+    if(panel)    panel.style.display="flex";
+    if(startBtn) startBtn.style.display="none";
+  }catch(e){clearSave();}
+}
+
+/* ═══════════════════════════════════════
+   iPAD / iOS
+═══════════════════════════════════════ */
+function setupTouch(){
+  document.body.style.touchAction="manipulation";
+  document.addEventListener("touchmove",function(e){
+    if(e.target===document.body||e.target===document.getElementById("app")) e.preventDefault();
+  },{passive:false});
+  document.addEventListener("touchstart",function(e){
+    var b=e.target.closest("button,.league-card:not(.locked),.choice-btn");
+    if(b) b.style.opacity="0.80";
+  },{passive:true});
+  document.addEventListener("touchend",function(e){
+    var b=e.target.closest("button,.league-card:not(.locked),.choice-btn");
+    if(b) setTimeout(function(){b.style.opacity="";},150);
+  },{passive:true});
+  window.addEventListener("resize",function(){
+    var a=document.querySelector(".screen.active");
+    if(a){var f=a.querySelector("input:focus");if(f) setTimeout(function(){f.scrollIntoView({behavior:"smooth",block:"center"});},100);}
+  });
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+function init(){
+  buildPitch();
+  setupTouch();
+  checkResume();
+}
+
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
