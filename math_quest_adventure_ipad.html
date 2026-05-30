@@ -186,6 +186,9 @@
     font-size: 1.3rem; letter-spacing: 2px;
   }
 
+  .home-btn { font-size: 1.3rem; text-decoration: none; line-height: 1; opacity: 0.7; transition: opacity 0.2s, transform 0.2s; border-radius: 8px; padding: 2px 4px; }
+  .home-btn:hover { opacity: 1; transform: scale(1.15); }
+
   .map-title {
     font-family: 'Fredoka One', cursive;
     font-size: clamp(1.5rem, 5vw, 2.5rem);
@@ -562,6 +565,7 @@
   <!-- ===== WORLD MAP ===== -->
   <div id="map-screen" class="screen">
     <div class="hud">
+      <a href="index.html" class="home-btn" title="Back to Home">🏠</a>
       <div class="hud-name" id="hud-name">⭐ Sam</div>
       <div class="hud-score">MAP Score: <span id="hud-map-score">228</span></div>
       <div class="hud-lives" id="hud-lives">❤️❤️❤️</div>
