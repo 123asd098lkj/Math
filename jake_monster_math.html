@@ -207,6 +207,8 @@ body {
 .hud-name  { font-family: var(--font-disp); font-size: 1.15rem; color: var(--yellow); }
 .hud-score { font-family: var(--font-disp); font-size: 1rem; color: var(--teal); }
 .hud-lives { font-size: 1.2rem; letter-spacing: 3px; }
+.home-btn { font-size: 1.3rem; text-decoration: none; line-height: 1; opacity: 0.7; transition: opacity 0.2s, transform 0.2s; border-radius: 8px; padding: 2px 4px; }
+.home-btn:hover { opacity: 1; transform: scale(1.15); }
 
 /* ══════════════════════════════════════
    MAP SCREEN
@@ -503,6 +505,7 @@ body {
 <!-- ════════════════ MAP ════════════════ -->
 <div id="map-screen" class="screen">
   <div class="hud">
+    <a href="index.html" class="home-btn" title="Back to Home">🏠</a>
     <div class="hud-name">⚔️ Jake</div>
     <div class="hud-score">MAP: <span id="hud-map">189</span></div>
     <div class="hud-lives" id="hud-lives">❤️❤️❤️</div>
