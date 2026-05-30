@@ -468,6 +468,28 @@ body {
   .dungeon-card { width: 155px; padding: 16px 12px; }
   .lu-stats     { flex-direction: column; gap: 14px; }
 }
+
+/* ── In-game navigation bar ── */
+.game-nav {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; max-width: 720px;
+  padding: 0;
+}
+.game-nav-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: inherit; font-size: 0.82rem; font-weight: 700;
+  text-decoration: none; color: #4caf22;
+  background: rgba(76,175,34,0.12); border: 1px solid rgba(76,175,34,0.25);
+  border-radius: 20px; padding: 7px 14px;
+  cursor: pointer; transition: all 0.18s;
+  touch-action: manipulation; white-space: nowrap;
+  -webkit-user-select: none; user-select: none;
+  letter-spacing: 0.5px;
+}
+.game-nav-btn:hover { opacity: 0.85; transform: scale(1.04); }
+.game-nav-btn:active { transform: scale(0.96); }
+.game-nav-spacer { flex: 1; }
+
 </style>
 </head>
 <body>
@@ -550,6 +572,12 @@ body {
 
 <!-- ════════════════ QUESTION ════════════════ -->
 <div id="question-screen" class="screen">
+  <div class="game-nav">
+    <a href="index.html" class="game-nav-btn">🏠 Home</a>
+    <button type="button" class="game-nav-btn" onclick="showScreen('intro-screen')">🗺 Jake's Dungeons</button>
+    <div class="game-nav-spacer"></div>
+  </div>
+
   <div class="q-top">
     <div>
       <div class="q-zone-tag" id="q-zone">🧟 Zombie Swamp</div>
@@ -584,6 +612,12 @@ body {
 
 <!-- ════════════════ LEVEL UP ════════════════ -->
 <div id="levelup-screen" class="screen">
+  <div class="game-nav">
+    <a href="index.html" class="game-nav-btn">🏠 Home</a>
+    <button type="button" class="game-nav-btn" onclick="showScreen('intro-screen')">🗺 Jake's Dungeons</button>
+    <div class="game-nav-spacer"></div>
+  </div>
+
   <div class="lu-monster" id="lu-emoji">🎉</div>
   <div class="lu-title"   id="lu-title">DUNGEON CLEARED!</div>
   <p class="lu-desc"      id="lu-desc">Awesome job, Jake!</p>
@@ -597,6 +631,12 @@ body {
 
 <!-- ════════════════ WIN ════════════════ -->
 <div id="win-screen" class="screen">
+  <div class="game-nav">
+    <a href="index.html" class="game-nav-btn">🏠 Home</a>
+    <button type="button" class="game-nav-btn" onclick="showScreen('intro-screen')">🗺 Jake's Dungeons</button>
+    <div class="game-nav-spacer"></div>
+  </div>
+
   <span style="font-size:6rem;animation:monsterBounce 1.2s ease-in-out infinite alternate;display:block;filter:drop-shadow(0 0 24px rgba(255,225,53,0.9))">🏆</span>
   <div class="win-title">JAKE WINS!</div>
   <p style="font-size:1.15rem;max-width:420px;text-align:center;line-height:1.8;color:rgba(245,240,220,0.9)">
