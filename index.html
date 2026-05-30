@@ -179,17 +179,16 @@ body {
 .card-nora::before { background: radial-gradient(ellipse at 50% 0%, rgba(72,202,228,0.1) 0%, transparent 70%); }
 
 .card-henry {
-  --accent: #ffd166;
-  --accent2: #ff9a3c;
-  --glow: rgba(255, 209, 102, 0.25);
-  opacity: 0.65; cursor: default;
+  --accent: #00ff6e;
+  --accent2: #ffd166;
+  --glow: rgba(0, 255, 110, 0.35);
 }
 .card-henry:hover {
-  transform: none;
-  border-color: rgba(255, 209, 102, 0.3);
-  box-shadow: 0 8px 24px var(--glow);
-  background: rgba(255, 209, 102, 0.04);
+  border-color: var(--accent);
+  box-shadow: 0 12px 40px var(--glow), 0 0 0 1px rgba(0,255,110,0.2);
+  background: rgba(0, 255, 110, 0.06);
 }
+.card-henry::before { background: radial-gradient(ellipse at 50% 0%, rgba(0,255,110,0.1) 0%, transparent 70%); }
 
 /* Card contents */
 .card-avatar {
@@ -199,7 +198,6 @@ body {
   transition: transform 0.22s ease;
 }
 .player-card:hover .card-avatar { transform: scale(1.12) rotate(5deg); }
-.card-henry:hover .card-avatar  { transform: none; }
 
 .card-name {
   font-family: 'Fredoka One', cursive;
@@ -259,10 +257,6 @@ body {
   color: #0a0a14;
   box-shadow: 0 4px 16px var(--glow);
 }
-.card-henry .card-cta {
-  border-color: rgba(255,209,102,0.3); color: rgba(255,209,102,0.4); cursor: default;
-}
-.card-henry:hover .card-cta { background: transparent; color: rgba(255,209,102,0.4); box-shadow: none; }
 
 /* Coming soon pill */
 .coming-soon-pill {
@@ -379,21 +373,20 @@ body {
       <div class="card-cta">Play Now!</div>
     </a>
 
-    <!-- HENRY — Coming Soon -->
-    <div class="player-card card-henry">
-      <span class="coming-soon-pill">Coming Soon</span>
-      <span class="card-avatar">⭐</span>
+    <!-- HENRY -->
+    <a class="player-card card-henry" href="soccer_math_pro.html">
+      <span class="card-avatar">⚽</span>
       <div class="card-name">Henry</div>
-      <div class="card-game-name">New Adventure</div>
+      <div class="card-game-name">Soccer Math Pro</div>
       <div class="card-divider"></div>
-      <div class="card-age">Age TBD</div>
-      <div class="card-grades">Grades TBD</div>
+      <div class="card-age">Age 14</div>
+      <div class="card-grades">Grades 8 · 9 · 10</div>
       <div class="card-map-badge">
-        <span class="map-dot" style="background:rgba(255,209,102,0.4);box-shadow:none"></span>
-        MAP TBD
+        <span class="map-dot"></span>
+        MAP 251 → 290
       </div>
-      <div class="card-cta">Coming Soon</div>
-    </div>
+      <div class="card-cta">Play Now!</div>
+    </a>
 
   </div>
 
