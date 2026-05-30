@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kids Math Adventures</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   BASE
+═══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #0a0a14;
+  color: #f0f4ff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════
+   ANIMATED BACKGROUND
+═══════════════════════════════════════ */
+#bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  background: radial-gradient(ellipse at 20% 10%, #1a1060 0%, #0a0a14 55%),
+              radial-gradient(ellipse at 80% 90%, #0d2010 0%, transparent 50%);
+}
+.star {
+  position: absolute; border-radius: 50%; background: white;
+  animation: twinkle ease-in-out infinite alternate;
+}
+@keyframes twinkle {
+  0%   { opacity: 0.15; transform: scale(1); }
+  100% { opacity: 0.9;  transform: scale(1.4); }
+}
+.orb {
+  position: absolute; border-radius: 50%;
+  animation: orbDrift ease-in-out infinite alternate;
+  filter: blur(60px); opacity: 0.18;
+}
+@keyframes orbDrift {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(20px, -30px); }
+}
+
+/* ═══════════════════════════════════════
+   PAGE LAYOUT
+═══════════════════════════════════════ */
+#app {
+  position: relative; z-index: 1;
+  max-width: 960px; margin: 0 auto;
+  padding: 40px 20px 60px;
+}
+
+/* ═══════════════════════════════════════
+   HEADER
+═══════════════════════════════════════ */
+.site-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.site-logo {
+  font-size: 3.5rem;
+  display: block;
+  margin-bottom: 12px;
+  animation: logoFloat 2.5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 20px rgba(168, 230, 100, 0.5));
+}
+@keyframes logoFloat {
+  0%   { transform: translateY(0)    rotate(-4deg); }
+  100% { transform: translateY(-10px) rotate(4deg); }
+}
+
+.site-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2.2rem, 7vw, 4rem);
+  background: linear-gradient(135deg, #ffd700 0%, #ff6b35 40%, #a855f7 80%, #00d2d3 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 2px 12px rgba(255, 215, 0, 0.25));
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+.site-subtitle {
+  font-size: 1.05rem; font-weight: 600;
+  color: rgba(240, 244, 255, 0.55);
+  letter-spacing: 1px;
+}
+
+.divider {
+  width: 120px; height: 3px; margin: 18px auto 0;
+  background: linear-gradient(90deg, transparent, #a855f7, #00d2d3, transparent);
+  border-radius: 2px; opacity: 0.6;
+}
+
+/* ═══════════════════════════════════════
+   SECTION LABEL
+═══════════════════════════════════════ */
+.section-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px;
+  color: rgba(240, 244, 255, 0.35);
+  text-align: center; margin-bottom: 28px;
+}
+
+/* ═══════════════════════════════════════
+   CARD GRID
+═══════════════════════════════════════ */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 22px;
+  margin-bottom: 50px;
+}
+
+/* ═══════════════════════════════════════
+   PLAYER CARD
+═══════════════════════════════════════ */
+.player-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 24px;
+  padding: 28px 20px 22px;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+  cursor: pointer;
+  position: relative; overflow: hidden;
+}
+.player-card::before {
+  content: "";
+  position: absolute; inset: 0; border-radius: 24px;
+  opacity: 0; transition: opacity 0.22s ease;
+}
+.player-card:hover { transform: translateY(-8px); }
+.player-card:hover::before { opacity: 1; }
+.player-card:active { transform: translateY(-4px) scale(0.98); }
+
+/* Per-card colour themes */
+.card-jake {
+  --accent: #4caf22;
+  --accent2: #00e5c8;
+  --glow: rgba(76, 175, 34, 0.35);
+}
+.card-jake:hover {
+  border-color: var(--accent);
+  box-shadow: 0 12px 40px var(--glow), 0 0 0 1px rgba(76,175,34,0.2);
+  background: rgba(76, 175, 34, 0.06);
+}
+.card-jake::before { background: radial-gradient(ellipse at 50% 0%, rgba(76,175,34,0.1) 0%, transparent 70%); }
+
+.card-sam {
+  --accent: #00d2d3;
+  --accent2: #a855f7;
+  --glow: rgba(0, 210, 211, 0.35);
+}
+.card-sam:hover {
+  border-color: var(--accent);
+  box-shadow: 0 12px 40px var(--glow), 0 0 0 1px rgba(0,210,211,0.2);
+  background: rgba(0, 210, 211, 0.06);
+}
+.card-sam::before { background: radial-gradient(ellipse at 50% 0%, rgba(0,210,211,0.1) 0%, transparent 70%); }
+
+.card-nora {
+  --accent: #48cae4;
+  --accent2: #c77dff;
+  --glow: rgba(72, 202, 228, 0.35);
+}
+.card-nora:hover {
+  border-color: var(--accent);
+  box-shadow: 0 12px 40px var(--glow), 0 0 0 1px rgba(72,202,228,0.2);
+  background: rgba(72, 202, 228, 0.06);
+}
+.card-nora::before { background: radial-gradient(ellipse at 50% 0%, rgba(72,202,228,0.1) 0%, transparent 70%); }
+
+.card-henry {
+  --accent: #ffd166;
+  --accent2: #ff9a3c;
+  --glow: rgba(255, 209, 102, 0.25);
+  opacity: 0.65; cursor: default;
+}
+.card-henry:hover {
+  transform: none;
+  border-color: rgba(255, 209, 102, 0.3);
+  box-shadow: 0 8px 24px var(--glow);
+  background: rgba(255, 209, 102, 0.04);
+}
+
+/* Card contents */
+.card-avatar {
+  font-size: 3.8rem;
+  display: block; line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+  transition: transform 0.22s ease;
+}
+.player-card:hover .card-avatar { transform: scale(1.12) rotate(5deg); }
+.card-henry:hover .card-avatar  { transform: none; }
+
+.card-name {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.55rem; line-height: 1;
+}
+.card-jake  .card-name { color: var(--accent); }
+.card-sam   .card-name { color: var(--accent); }
+.card-nora  .card-name { color: var(--accent); }
+.card-henry .card-name { color: var(--accent); }
+
+.card-game-name {
+  font-size: 0.82rem; font-weight: 700; opacity: 0.55;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+
+.card-divider {
+  width: 50px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  margin: 2px 0;
+}
+
+.card-age {
+  font-size: 0.88rem; font-weight: 700;
+  color: rgba(240, 244, 255, 0.65);
+}
+
+.card-grades {
+  font-size: 0.8rem; font-weight: 600;
+  color: rgba(240, 244, 255, 0.45);
+}
+
+.card-map-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 0.78rem; font-weight: 700;
+  color: rgba(240, 244, 255, 0.55);
+}
+.map-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0;
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.card-cta {
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 8px 20px; border-radius: 20px; border: none;
+  color: var(--accent); background: transparent;
+  border: 1.5px solid var(--accent);
+  cursor: pointer; transition: all 0.18s; margin-top: 4px;
+  width: 100%;
+}
+.player-card:hover .card-cta {
+  background: var(--accent);
+  color: #0a0a14;
+  box-shadow: 0 4px 16px var(--glow);
+}
+.card-henry .card-cta {
+  border-color: rgba(255,209,102,0.3); color: rgba(255,209,102,0.4); cursor: default;
+}
+.card-henry:hover .card-cta { background: transparent; color: rgba(255,209,102,0.4); box-shadow: none; }
+
+/* Coming soon pill */
+.coming-soon-pill {
+  position: absolute; top: 16px; right: 16px;
+  background: rgba(255,209,102,0.12); border: 1px solid rgba(255,209,102,0.3);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+  color: rgba(255,209,102,0.65);
+}
+
+/* ═══════════════════════════════════════
+   INFO SECTION
+═══════════════════════════════════════ */
+.info-strip {
+  display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+  margin-bottom: 40px;
+}
+.info-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 30px; padding: 8px 18px;
+  font-size: 0.85rem; font-weight: 600;
+  color: rgba(240,244,255,0.6);
+}
+.info-chip-icon { font-size: 1.1rem; }
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+.site-footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(240,244,255,0.25);
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media (max-width: 500px) {
+  .card-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+  .player-card { padding: 20px 14px 18px; }
+  .card-avatar { font-size: 2.8rem; }
+  .card-name   { font-size: 1.3rem; }
+  #app { padding: 28px 14px 50px; }
+}
+@media (max-width: 340px) {
+  .card-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+
+<div id="app">
+
+  <!-- ══ HEADER ══ -->
+  <header class="site-header">
+    <span class="site-logo">🎓</span>
+    <h1 class="site-title">Kids Math Adventures</h1>
+    <p class="site-subtitle">Choose your adventure and start learning!</p>
+    <div class="divider"></div>
+  </header>
+
+  <!-- ══ PLAYER CARDS ══ -->
+  <div class="section-label">Select a Player</div>
+
+  <div class="card-grid">
+
+    <!-- JAKE -->
+    <a class="player-card card-jake" href="jake_monster_math.html">
+      <span class="card-avatar">👾</span>
+      <div class="card-name">Jake</div>
+      <div class="card-game-name">Monster Math</div>
+      <div class="card-divider"></div>
+      <div class="card-age">Age 7</div>
+      <div class="card-grades">Grades 2 · 3 · 4</div>
+      <div class="card-map-badge">
+        <span class="map-dot"></span>
+        MAP 189 → 210
+      </div>
+      <div class="card-cta">Play Now!</div>
+    </a>
+
+    <!-- SAM -->
+    <a class="player-card card-sam" href="math_quest_adventure_ipad.html">
+      <span class="card-avatar">🚀</span>
+      <div class="card-name">Sam</div>
+      <div class="card-game-name">Math Quest</div>
+      <div class="card-divider"></div>
+      <div class="card-age">Age 9</div>
+      <div class="card-grades">Grades 4 · 5 · 6</div>
+      <div class="card-map-badge">
+        <span class="map-dot"></span>
+        MAP 228 → 260
+      </div>
+      <div class="card-cta">Play Now!</div>
+    </a>
+
+    <!-- NORA -->
+    <a class="player-card card-nora" href="ocean_math_adventure.html">
+      <span class="card-avatar">🐠</span>
+      <div class="card-name">Nora</div>
+      <div class="card-game-name">Ocean Math</div>
+      <div class="card-divider"></div>
+      <div class="card-age">Age 11</div>
+      <div class="card-grades">Grades 6 · 7 · 8</div>
+      <div class="card-map-badge">
+        <span class="map-dot"></span>
+        MAP 238 → 270
+      </div>
+      <div class="card-cta">Play Now!</div>
+    </a>
+
+    <!-- HENRY — Coming Soon -->
+    <div class="player-card card-henry">
+      <span class="coming-soon-pill">Coming Soon</span>
+      <span class="card-avatar">⭐</span>
+      <div class="card-name">Henry</div>
+      <div class="card-game-name">New Adventure</div>
+      <div class="card-divider"></div>
+      <div class="card-age">Age TBD</div>
+      <div class="card-grades">Grades TBD</div>
+      <div class="card-map-badge">
+        <span class="map-dot" style="background:rgba(255,209,102,0.4);box-shadow:none"></span>
+        MAP TBD
+      </div>
+      <div class="card-cta">Coming Soon</div>
+    </div>
+
+  </div>
+
+  <!-- ══ INFO CHIPS ══ -->
+  <div class="info-strip">
+    <div class="info-chip"><span class="info-chip-icon">💾</span> Progress saves automatically</div>
+    <div class="info-chip"><span class="info-chip-icon">📱</span> Works on iPad &amp; desktop</div>
+    <div class="info-chip"><span class="info-chip-icon">🎯</span> 250 questions per level</div>
+    <div class="info-chip"><span class="info-chip-icon">🏆</span> Earn 90% to advance</div>
+  </div>
+
+  <!-- ══ FOOTER ══ -->
+  <footer class="site-footer">
+    Kids Math Adventures &nbsp;·&nbsp; Each game saves progress automatically in your browser.
+  </footer>
+
+</div>
+
+<script>
+// Build star background
+(function() {
+  var bg = document.getElementById("bg");
+
+  // Stars
+  for (var i = 0; i < 110; i++) {
+    var star = document.createElement("div");
+    star.className = "star";
+    var size = Math.random() * 2.5 + 0.8;
+    star.style.cssText =
+      "width:" + size + "px;height:" + size + "px;" +
+      "top:" + (Math.random() * 100) + "%;left:" + (Math.random() * 100) + "%;" +
+      "animation-duration:" + (2 + Math.random() * 3) + "s;" +
+      "animation-delay:" + (Math.random() * 4) + "s;";
+    bg.appendChild(star);
+  }
+
+  // Colour orbs
+  var orbs = [
+    { color: "#4caf22", top: "10%",  left: "5%",   size: 400 },
+    { color: "#00d2d3", top: "60%",  right: "8%",  size: 350 },
+    { color: "#a855f7", top: "30%",  left: "60%",  size: 300 },
+    { color: "#ffd166", bottom: "10%", left: "30%", size: 280 },
+  ];
+  orbs.forEach(function(o) {
+    var orb = document.createElement("div");
+    orb.className = "orb";
+    var css = "background:" + o.color + ";width:" + o.size + "px;height:" + o.size + "px;" +
+      "animation-duration:" + (6 + Math.random() * 5) + "s;" +
+      "animation-delay:" + (Math.random() * 3) + "s;";
+    if (o.top)    css += "top:"    + o.top    + ";";
+    if (o.left)   css += "left:"   + o.left   + ";";
+    if (o.right)  css += "right:"  + o.right  + ";";
+    if (o.bottom) css += "bottom:" + o.bottom + ";";
+    orb.style.cssText = css;
+    bg.appendChild(orb);
+  });
+})();
+</script>
+</body>
+</html>
