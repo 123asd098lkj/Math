@@ -1006,23 +1006,56 @@ function advanceQueue(world) {
 // ─────────────────────────────────────────────
 const SAVE_KEY = 'mathquest_save_v2';
 
-// ─── Storage: window.name (works in Google Sites iframes) + fallbacks ───
+// ─── Storage: window.name + sessionStorage + localStorage fallbacks ───
 function _storeGet(key) {
-  try { var s=JSON.parse(window.name||'{}'); if (s[key]) return JSON.parse(s[key]); } catch(e) {}
-  try { var r=sessionStorage.getItem(key); if (r) return JSON.parse(r); } catch(e) {}
-  try { var r=localStorage.getItem(key);   if (r) return JSON.parse(r); } catch(e) {}
+  try {
+    var raw = (window.name && window.name.charAt(0) === '{') ? window.name : '{}';
+    var s = JSON.parse(raw);
+    if (s && s[key]) return JSON.parse(s[key]);
+  } catch(e) {}
+  try { var r1 = sessionStorage.getItem(key); if (r1) return JSON.parse(r1); } catch(e) {}
+  try { var r2 = localStorage.getItem(key);   if (r2) return JSON.parse(r2); } catch(e) {}
   return null;
 }
 function _storeSet(key, val) {
   var json = JSON.stringify(val);
-  try { var s={}; try{s=JSON.parse(window.name||'{}')||{};}catch(e){} s[key]=json; window.name=JSON.stringify(s); } catch(e) {}
+  try {
+    var raw = (window.name && window.name.charAt(0) === '{') ? window.name : '{}';
+    var s = {}; try { s = JSON.parse(raw) || {}; } catch(e) { s = {}; }
+    s[key] = json; window.name = JSON.stringify(s);
+  } catch(e) {}
   try { sessionStorage.setItem(key, json); } catch(e) {}
   try { localStorage.setItem(key, json);   } catch(e) {}
 }
 function _storeDel(key) {
-  try { var s={}; try{s=JSON.parse(window.name||'{}')||{};}catch(e){} delete s[key]; window.name=JSON.stringify(s); } catch(e) {}
+  try {
+    var raw = (window.name && window.name.charAt(0) === '{') ? window.name : '{}';
+    var s = {}; try { s = JSON.parse(raw) || {}; } catch(e) { s = {}; }
+    delete s[key]; window.name = JSON.stringify(s);
+  } catch(e) {}
   try { sessionStorage.removeItem(key); } catch(e) {}
   try { localStorage.removeItem(key);   } catch(e) {}
+}
+
+// ─────────────────────────────────────────────
+//  RESUME HELPERS (called by static HTML buttons)
+// ─────────────────────────────────────────────
+function resumeGame() {
+  updateMapUI();
+  showScreen('map-screen');
+}
+
+function startOver() {
+  clearProgress();
+  document.getElementById('resume-panel').style.display = 'none';
+  document.getElementById('start-btn').style.display = '';
+  STATE.name = 'Sam'; STATE.mapScore = 228; STATE.lives = 3;
+  STATE.totalPoints = 0; STATE.streak = 0; STATE.currentWorld = 0;
+  STATE.worlds.forEach((w, i) => {
+    w.unlocked = (i === 0); w.completed = false;
+    w.questionsAnswered = 0; w.correctAnswers = 0;
+    w.problems = []; w.order = []; w.orderPos = 0;
+  });
 }
 
 function saveProgress() {
